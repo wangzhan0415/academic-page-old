@@ -2,6 +2,7 @@ name: Build
 
 env:
   NODE_VERSION: '22'
+  GO_VERSION: '1.25.x'
 
 on:
   # Standalone trigger for PR validation
@@ -16,9 +17,11 @@ on:
   # Allow manual trigger for testing
   workflow_dispatch:
 
-# Read-only permissions for security
+# Required for reusable GitHub Pages build and artifact upload
 permissions:
   contents: read
+  pages: write
+  id-token: write
 
 # Prevent duplicate builds for the same PR
 concurrency:
@@ -47,6 +50,14 @@ jobs:
     - name: Setup pnpm
       if: hashFiles('package.json') != ''
       uses: pnpm/action-setup@v6
+      with:
+        version: 10.14.0
+
+    - name: Setup Go
+      uses: actions/setup-go@v6
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        cache: true
 
     - name: Get Hugo Version
       id: hugo-version
@@ -143,6 +154,6 @@ jobs:
 
     - name: Upload artifact
       id: upload
-      uses: actions/upload-pages-artifact@v4
+      uses: actions/upload-pages-artifact@v5
       with:
         path: ./public
