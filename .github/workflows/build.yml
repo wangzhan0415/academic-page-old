@@ -48,8 +48,9 @@ jobs:
     - name: Setup Go
       uses: actions/setup-go@v6
       with:
-        go-version-file: go.mod
+        go-version: 'stable'
         cache: true
+        cache-dependency-path: go.sum
 
     - name: Setup pnpm
       if: hashFiles('package.json') != ''
@@ -141,17 +142,22 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-hugo-resources-
 
-    - name: Setup Pages
-      id: pages
-      uses: actions/configure-pages@v6
-
     - name: Build with Hugo
       env:
         HUGO_ENVIRONMENT: production
         HUGO_BLOX_LICENSE: ${{ secrets.HUGO_BLOX_LICENSE }}
       run: |
+        OWNER="${GITHUB_REPOSITORY_OWNER}"
+        REPO="${GITHUB_REPOSITORY#*/}"
+        if [[ "$REPO" == "${OWNER}.github.io" ]]; then
+          BASE_URL="https://${OWNER}.github.io/"
+        else
+          BASE_URL="https://${OWNER}.github.io/${REPO}/"
+        fi
+
+        echo "Base URL: ${BASE_URL}"
         echo "Hugo Cache Dir: $(hugo config | grep cachedir)"
-        hugo --minify --baseURL "${{ steps.pages.outputs.base_url }}/"
+        hugo --minify --baseURL "${BASE_URL}"
 
     - name: Generate Pagefind search index (if applicable)
       run: |
